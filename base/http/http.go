@@ -45,7 +45,7 @@ func (c *Connection) reader() {
 		}
 		callId := message.Ext + "." + message.Method
 		ch := make(chan *OutgoingMsg)
-		go Call(c.Session, callId, message.Data, ch)
+		go call(c.Session, callId, message.Data, ch)
 		response := <-ch
 		if response != nil {
 			c.Send <- *response

@@ -7,15 +7,11 @@ import (
 
 /*
 Handles an incoming message and routes it to the appropriate place.
-Also manages permissions for incoming messages. Also see setup/setup.go
 */
 
 var Routes = make(map[string]func(string, string) *OutgoingMsg)
 
-// See
-// http://www.mikespook.com/2012/07/function-call-by-name-in-golang/
-// http://stackoverflow.com/questions/6769020/go-map-of-functions
-func Call(session string, key string, data string, ch chan *OutgoingMsg) {
+func call(session string, key string, data string, ch chan *OutgoingMsg) {
 
     // Call the function
     _, containsKey := Routes[key]
@@ -28,8 +24,6 @@ func Call(session string, key string, data string, ch chan *OutgoingMsg) {
 		ch <- &response
 	}
 }
-
-// See http://stackoverflow.com/questions/6564558/wildcards-in-the-pattern-for-http-handlefunc
 
 func initUrls() {
 	http.Handle("/ws", websocket.Handler(wsHandler))
