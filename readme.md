@@ -31,11 +31,11 @@ Testing it
 
 Test the base packages
 
-`$ go test base/*`
+`$ go test ./base/*`
 
 Test the extensions you've installed
 
-`$ go test exts/*`
+`$ go test ./exts/*`
 
 Extensions
 ---
