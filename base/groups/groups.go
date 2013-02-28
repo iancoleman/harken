@@ -16,7 +16,7 @@ type socketGroup struct {
 	unregister chan *http.Connection
 }
 
-var socketGroups = make(map[string]socketGroup)
+var SocketGroups = make(map[string]socketGroup)
 
 func (g *socketGroup) run() {
 	for {
@@ -25,7 +25,6 @@ func (g *socketGroup) run() {
 			g.connections[c] = true
 		case c := <-g.unregister:
 			delete(g.connections, c)
-			close(c.Send)
 		case m := <-g.broadcast:
 			for c := range g.connections {
 				select {
@@ -41,20 +40,30 @@ func (g *socketGroup) run() {
 }
 
 func Subscribe(c *http.Connection, groupId string) {
-	/*
-	if the group doesn't exist, make it.
-	then register the user to the group.
-	g := socketGroups[id]
-	g.register <- c
-	*/
-
+	if _,exists := SocketGroups[groupId]; !exists {
+		createGroup(groupId)
+	}
+	SocketGroups[groupId].register <- c
 }
 
 func Unsubscribe(c *http.Connection, groupId string) {
-	/*
-	unregister the user from the group.
-	if the group has zero members, delete it.
-	g := socketGroups[id]
-	g.unregister <- c
-	*/
+	SocketGroups[groupId].unregister <- c
+	if len(SocketGroups[groupId].connections) == 0 {
+		delete(SocketGroups, groupId)
+	}
+}
+
+func Broadcast(groupId string, data http.OutgoingMsg) {
+	SocketGroups[groupId].broadcast <- data
+}
+
+func createGroup(groupId string) {
+	g := socketGroup{
+		broadcast: make(chan http.OutgoingMsg),
+		register: make(chan *http.Connection),
+		unregister: make(chan *http.Connection),
+		connections: make(map[*http.Connection]bool),
+	}
+	SocketGroups[groupId] = g
+	go g.run()
 }
