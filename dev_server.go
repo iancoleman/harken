@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 // Inspired by http://12factor.net/build-release-run
@@ -26,11 +27,20 @@ func build() {
 
 func buildRoutes() {
 	fmt.Println("Compiling routes")
+	getRootFolder()
 	walkExtsForRoutes()
 	writeRoutesToFile()
 }
 
+var imports []string
 var routes []string
+var inits []string
+var	rootFolder string
+
+func getRootFolder() {
+	rootPath, _ := os.Getwd()
+	_, rootFolder = path.Split(rootPath)
+}
 
 func walkExtsForRoutes() {
 	err := filepath.Walk("exts", getRoutesFromFile)
@@ -43,14 +53,17 @@ func getRoutesFromFile(filename string, f os.FileInfo, err error) error {
 	p := len(filename)
 	isGoFile := filename[p-3:p] == ".go"
 	isTestFile := p > 8 && filename[p-8:p] == "_test.go"
-	r, err := regexp.Compile(`func\s+([A-Z][A-Za-z0-9_-]+)`)
+	funcRegexp, err := regexp.Compile(`func\s+([A-Z][A-Za-z0-9_-]+)`)
+	pkgRegexp, err := regexp.Compile(`package\s+([A-Za-z0-9]+)`)
 	if isGoFile && !isTestFile {
+		hasRoutes := false
 		f, err := os.Open(filename)
 		if err != nil {
 			panic(err)
 		}
 		defer f.Close()
 		bf := bufio.NewReader(f)
+		pkg := ""
 		for {
 			line, isPrefix, err := bf.ReadLine()
 			if err == io.EOF {
@@ -62,18 +75,60 @@ func getRoutesFromFile(filename string, f os.FileInfo, err error) error {
 			if isPrefix {
 				panic("Error: Unexpected ling line")
 			}
-			instance := r.FindStringSubmatch(string(line))
-			if len(instance) > 0 && instance[1] != "Init" {
-				_, pkg := path.Split(path.Dir(filename))
-				call := pkg + "." + instance[1]
-				routes = append(routes, call)
+			if len(pkg) == 0 {
+				pkgMatch := pkgRegexp.FindStringSubmatch(string(line))
+				if len(pkgMatch) > 0 {
+					pkg = pkgMatch[1]
+				}
 			}
+			funcName := funcRegexp.FindStringSubmatch(string(line))
+			if len(funcName) > 0 {
+				hasRoutes = true
+				call := pkg + "." + funcName[1]
+				if funcName[1] == "Init" {
+					inits = append(inits, call)
+				} else {
+					routes = append(routes, call)
+				}
+			}
+		}
+		if hasRoutes {
+			fullImport := path.Join(rootFolder, path.Dir(filename))
+			imports = append(imports, fullImport)
 		}
 	}
 	return err
 }
 
 func writeRoutesToFile() {
+	timports := ""
+	for _, i := range imports {
+		timports = timports + "\t\"" + i + "\"\n"
+	}
+	template = strings.Replace(template, "{{imports}}", timports, 1)
+
+	tinits := ""
+	for _, i := range inits {
+		tinits = tinits + "\t" + i + "()\n"
+	}
+	template = strings.Replace(template, "{{inits}}", tinits, 1)
+
+	troutes := ""
+	for _, i := range routes {
+		troutes = troutes + "\thttp.Routes[\"" + i + "\"] = " + i + "\n"
+	}
+	template = strings.Replace(template, "{{routes}}", troutes, 1)
+
+	f, err := os.Create("base/setup/exts.go")
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = f.WriteString(template)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func compile() {
@@ -112,3 +167,21 @@ func run() {
 	runServer.Wait()
 	fmt.Println(err)
 }
+
+var template = `
+package setup
+
+// Do not change this file.
+// This file has been automatically generated.
+// Any changes will not be retained.
+
+import (
+	"harken/base/http"
+{{imports}})
+
+func initExts() {
+{{inits}}}
+
+func bufferRoutes() {
+{{routes}}}
+`
