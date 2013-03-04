@@ -132,9 +132,12 @@ func writeRoutesToFile() {
 }
 
 func compile() {
+	// Only need to do this for a deployment, not for dev server
+	/*
 	fmt.Println("Building app")
 	compilation := exec.Command("go", "build", "main.go")
 	compilation.Start()
+	*/
 }
 
 func release() {
@@ -160,12 +163,17 @@ func createRelease() {
 func run() {
 	fmt.Println("Starting dev server")
 	// Get the latest release folder
-	runServer := exec.Command("./main")
+	// runServer := exec.Command("./main")
+	runServer := exec.Command("go", "run", "main.go")
 	stdout, err := runServer.StdoutPipe()
+	stderr, err := runServer.StderrPipe()
 	err = runServer.Start()
 	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
 	runServer.Wait()
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 var template = `
