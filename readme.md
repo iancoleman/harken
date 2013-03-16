@@ -12,9 +12,6 @@ Adding features
 
 Add your features to `exts` folder.
 
-Add the require routes and initialisation scripts for your features to
-`base/setup/exts.go`
-
 Make sure there's at least an index.html file in base/static with enough basic
 code in it to connect to the websocket. This will be done with javascript.
 An example index.html will be provided in the near future.
@@ -22,11 +19,11 @@ An example index.html will be provided in the near future.
 Using it
 ---
 
-Start the server.
+Start the server with the command `go run dev_server.go`
 
 Navigate to `http://localhost:8000/` in your browser
 
-Testing it
+Use it
 ---
 
 Test the base packages
