@@ -119,13 +119,15 @@ func getRoutesFromFile(filename string, f os.FileInfo, err error) error {
 					pkg = pkgMatch[1]
 				}
 			}
-			funcName := funcRegexp.FindStringSubmatch(string(line))
-			if len(funcName) > 0 {
+			funcNameBits := funcRegexp.FindStringSubmatch(string(line))
+			if len(funcNameBits) > 0 {
+				funcName := funcNameBits[1]
+				lastChar := string(funcName[len(funcName)-1])
 				hasRoutes = true
-				call := pkg + "." + funcName[1]
-				if funcName[1] == "Init" {
+				call := pkg + "." + funcName
+				if funcName == "Init_" {
 					inits = append(inits, call)
-				} else {
+				} else if lastChar != "_" { // _ at end of func implies private
 					routes = append(routes, call)
 				}
 			}
