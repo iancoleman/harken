@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -22,6 +23,7 @@ func main() {
 func build() {
 	// fetchDependencies()
 	buildRoutes()
+	copyStaticFiles()
 	compile()
 }
 
@@ -30,6 +32,42 @@ func buildRoutes() {
 	getRootFolder()
 	walkExtsForRoutes()
 	writeRoutesToFile()
+}
+
+func copyStaticFiles() {
+	filepath.Walk("exts", getStaticFilesFromPath)
+}
+
+func getStaticFilesFromPath(src string, f os.FileInfo, err error) error {
+	rSep := "[\\\\/]" // Path separator. Hints that regexp maybe non-ideal
+	rExtName := "([A-Za-z]+)"
+	rFileName := "(.*\\..*)"
+	extPath := "exts" + rSep + rExtName + rSep + "static" + rSep + rFileName
+	r, _ := regexp.Compile(extPath)
+	match := r.FindStringSubmatch(src)
+	if len(match) > 0 {
+		// Process the file - this is currently pretty basic, could be improved
+		// a lot
+		ext := match[1]
+		fileLocation := match[2]
+		filePath := path.Dir(fileLocation)
+		fileName := path.Base(fileLocation)
+		// Pipeline this file - preprocessing and minification
+		// Make sure the directory exists
+		dstPath := path.Join("static", ext, filePath)
+		dst := path.Join(dstPath, fileName)
+		os.MkdirAll(dstPath, 0755)
+		// Copy the resulting file content to ./static/EXT/BLAH
+		srcContent, err := ioutil.ReadFile(src)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(dst, srcContent, 0744)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return nil
 }
 
 var imports []string
