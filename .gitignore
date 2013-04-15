@@ -1,3 +1,5 @@
 exts/*/*
 tmp
 static/*
+base/setup/exts.go
+main
