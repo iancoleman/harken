@@ -11,9 +11,9 @@ members will be notified when events related to that group happen.
 
 type socketGroup struct {
 	connections map[*http.Connection]bool
-	broadcast chan http.OutgoingMsg
-	register chan *http.Connection
-	unregister chan *http.Connection
+	broadcast   chan http.OutgoingMsg
+	register    chan *http.Connection
+	unregister  chan *http.Connection
 }
 
 var SocketGroups = make(map[string]socketGroup)
@@ -40,7 +40,7 @@ func (g *socketGroup) run() {
 }
 
 func Subscribe(c *http.Connection, groupId string) {
-	if _,exists := SocketGroups[groupId]; !exists {
+	if _, exists := SocketGroups[groupId]; !exists {
 		createGroup(groupId)
 	}
 	SocketGroups[groupId].register <- c
@@ -59,9 +59,9 @@ func Broadcast(groupId string, data http.OutgoingMsg) {
 
 func createGroup(groupId string) {
 	g := socketGroup{
-		broadcast: make(chan http.OutgoingMsg),
-		register: make(chan *http.Connection),
-		unregister: make(chan *http.Connection),
+		broadcast:   make(chan http.OutgoingMsg),
+		register:    make(chan *http.Connection),
+		unregister:  make(chan *http.Connection),
 		connections: make(map[*http.Connection]bool),
 	}
 	SocketGroups[groupId] = g

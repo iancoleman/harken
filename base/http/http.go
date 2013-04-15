@@ -7,31 +7,31 @@ Starts the http server and passes requests to Routes
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
-	"net/http"
 	"harken/base/config"
 	"harken/base/util"
+	"net/http"
 )
 
 var Connections = make(map[string]*Connection)
 
 type IncomingMsg struct {
-	Ext string
+	Ext    string
 	Method string
-	Data string
+	Data   string
 }
 
 type OutgoingMsg struct {
-	Ext string
+	Ext    string
 	Method string
-	Data string
-	Error string
+	Data   string
+	Error  string
 }
 
 type Connection struct {
-	Owner string
-	Send chan OutgoingMsg
+	Owner   string
+	Send    chan OutgoingMsg
 	Session string
-	Ws *websocket.Conn
+	Ws      *websocket.Conn
 }
 
 func (c *Connection) reader() {
@@ -69,9 +69,9 @@ func (c *Connection) writer() {
 func wsHandler(ws *websocket.Conn) {
 	session := util.CreateToken(32)
 	c := &Connection{
-		Send: make(chan OutgoingMsg, 256),
+		Send:    make(chan OutgoingMsg, 256),
 		Session: session,
-		Ws: ws}
+		Ws:      ws}
 	Connections[session] = c
 	go c.writer()
 	c.reader()
