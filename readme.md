@@ -1,11 +1,16 @@
 Start the server
 ---
 
-`$ go run main.go`
+$ go build main.go
+$ ./main
 
-or alternatively,
+if it doesn't work, check that you have the GOPATH variable set correctly
+to /path/to/project/ which should then contain src/harken
+eg /path/to/project/src/harken should be a valid folder.
 
-`$ go build main.go && ./main`
+Set this variable by executing the command
+
+$ export GOPATH=/path/to/project
 
 Adding features
 ---
@@ -14,12 +19,12 @@ Add your features to `exts` folder.
 
 Make sure there's at least an index.html file in base/static with enough basic
 code in it to connect to the websocket. This will be done with javascript.
-An example index.html will be provided in the near future.
+An example index.html is provided.
 
-Using it
+Developing with it
 ---
 
-Start the server with the command `go run dev_server.go`
+Start the development server with the command `go run dev_server.go`
 
 Navigate to `http://localhost:8000/` in your browser
 
@@ -37,6 +42,6 @@ Test the extensions you've installed
 Extensions
 ---
 
-You'll have to write your own. Examples will be provided in the future.
+You'll have to write your own. A basic sample extension called test is provided.
 
-This software is only extremely young so this stuff isn't written yet.
+This software is still very young.
